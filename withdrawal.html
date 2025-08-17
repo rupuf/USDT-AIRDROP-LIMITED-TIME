@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Withdraw</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="nav">
+    <div class="logo">USDT</div>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a class="active" href="withdraw.html">Withdraw</a>
+      <a href="support.html">Support</a>
+      <button id="logoutBtn" class="ghost">Logout</button>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h1>Withdraw (TRC20)</h1>
+      <p class="muted" id="lockMsg"></p>
+
+      <form id="wForm" class="grid">
+        <input id="w_addr" placeholder="TRON address (starts with T)" />
+        <input id="w_amt" type="number" min="1" step="1" placeholder="Amount (USDT)" />
+        <button type="submit">Create Request</button>
+      </form>
+
+      <div id="wInfo" class="callout hidden">
+        <div class="row space">
+          <div>
+            <strong>Request created</strong>
+            <div class="muted">Share this payload with support:</div>
+          </div>
+          <a class="btn" id="tgLink" target="_blank">Open Telegram</a>
+        </div>
+        <textarea id="payload" readonly rows="4"></textarea>
+        <button class="ghost" id="copyBtn">Copy</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="lib.js"></script>
+  <script>
+    guardAuth();
+    const user = currentUser(); if(!user) location.href='login.html';
+    document.getElementById('logoutBtn').addEventListener('click', () => { logout(); location.href='login.html'; });
+
+    const locked = !user.unlocked;
+    const lockMsg = document.getElementById('lockMsg');
+    const form = document.getElementById('wForm');
+
+    if (locked) {
+      lockMsg.textContent = 'Withdrawal is locked. Please contact Customer Service to unlock.';
+      form.addEventListener('submit', (e)=>{ e.preventDefault(); location.href='support.html'; });
+    } else {
+      lockMsg.textContent = 'Enter your TRON address and amount.';
+      form.addEventListener('submit', (e)=>{
+        e.preventDefault();
+        const addr = document.getElementById('w_addr').value.trim();
+        const amt = parseFloat(document.getElementById('w_amt').value);
+        if (!isTron(addr)) return toast('Enter valid TRON address');
+        if (!(amt>0)) return toast('Enter valid amount');
+        if (amt>user.bal) return toast('Amount exceeds balance');
+
+        const reqId = 'W'+Math.random().toString(36).slice(2,8).toUpperCase();
+        user.tx.unshift({id:reqId,type:'withdraw',amount:amt,address:addr,status:'requested',date:Date.now()});
+        saveUser(user);
+
+        const payload = {request:reqId,user:user.u,address:addr,amount:amt,date:new Date().toISOString()};
+        document.getElementById('payload').value = JSON.stringify(payload);
+        document.getElementById('wInfo').classList.remove('hidden');
+        document.getElementById('tgLink').href = SUPPORT_LINK;
+        toast('Request created');
+      });
+    }
+
+    document.getElementById('copyBtn').addEventListener('click', ()=>{
+      const ta=document.getElementById('payload'); ta.select(); document.execCommand('copy'); toast('Copied');
+    });
+  </script>
+</body>
+</html>
