@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="nav">
+    <div class="logo">USDT</div>
+    <nav>
+      <a class="active" href="dashboard.html">Dashboard</a>
+      <a href="withdraw.html">Withdraw</a>
+      <a href="support.html">Support</a>
+      <button id="logoutBtn" class="ghost">Logout</button>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <div class="row">
+        <div class="badge">User: <span id="u_name">—</span></div>
+        <div class="badge">Balance: <strong id="u_bal">0</strong> USDT</div>
+        <div id="lockBadge" class="badge warn">Withdraw Locked</div>
+        <div id="okBadge" class="badge ok hidden">Withdraw Unlocked</div>
+      </div>
+
+      <div class="actions">
+        <a class="btn" id="goWithdraw" href="withdraw.html">Withdraw</a>
+        <a class="btn ghost" href="support.html">Contact Support</a>
+      </div>
+
+      <h3>History</h3>
+      <table class="table">
+        <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Status</th><th>Notes</th></tr></thead>
+        <tbody id="txBody"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="lib.js"></script>
+  <script>
+    guardAuth(); // must be logged in
+    const user = currentUser();
+    if (!user) location.href = "login.html";
+
+    document.getElementById('u_name').textContent = user.u;
+    document.getElementById('u_bal').textContent = user.bal.toFixed(2);
+
+    // lock/unlock badges
+    document.getElementById('lockBadge').classList.toggle('hidden', !!user.unlocked);
+    document.getElementById('okBadge').classList.toggle('hidden', !user.unlocked);
+
+    // if locked, clicking withdraw sends to support
+    const goW = document.getElementById('goWithdraw');
+    if (!user.unlocked) goW.setAttribute('href','support.html');
+
+    // history
+    const body = document.getElementById('txBody');
+    if (!user.tx.length) {
+      body.innerHTML = '<tr><td colspan="5"><span class="muted">No activity yet.</span></td></tr>';
+    } else {
+      body.innerHTML = user.tx.map(t => `
+        <tr>
+          <td>${new Date(t.date).toLocaleString()}</td>
+          <td>${t.type==='bonus'?'Bonus':'Withdraw'}</td>
+          <td>${t.type==='bonus'?'+':''}${t.amount} USDT</td>
+          <td><span class="${t.status==='paid'?'ok':(t.status==='requested'?'warn':'err')}">${t.status}</span></td>
+          <td>${t.address?('Addr '+t.address.slice(0,6)+'…'+t.address.slice(-4)):'—'} ${t.txid?('• '+t.txid):''}</td>
+        </tr>`).join('');
+    }
+
+    // logout
+    document.getElementById('logoutBtn').addEventListener('click', () => { logout(); location.href='login.html'; });
+  </script>
+</body>
+</html>
