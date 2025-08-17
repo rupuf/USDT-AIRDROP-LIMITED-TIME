@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Support</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="nav">
+    <div class="logo">USDT</div>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="withdraw.html">Withdraw</a>
+      <a class="active" href="support.html">Support</a>
+      <button id="logoutBtn" class="ghost">Logout</button>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h1>Customer Service</h1>
+      <p class="muted">For withdrawal assistance, contact us on Telegram and provide your request details.</p>
+
+      <div class="row">
+        <!-- Direct Telegram link -->
+        <a class="btn" id="tgBtn" href="https://t.me/jakejonshon12" target="_blank">Open Telegram</a>
+      </div>
+
+      <div class="hr"></div>
+      <h3>Unlock Withdraw</h3>
+      <form id="unlockForm" class="grid">
+        <input id="unlockCode" placeholder="Enter unlock code" />
+        <button type="submit">Unlock</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="lib.js"></script>
+  <script>
+    guardAuth();
+    const u = currentUser(); 
+    if(!u) location.href='login.html';
+
+    document.getElementById('logoutBtn').addEventListener('click', () => { 
+      logout(); 
+      location.href='login.html'; 
+    });
+
+    // Unlock code flow (front-end only)
+    document.getElementById('unlockForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const code = document.getElementById('unlockCode').value.trim();
+      if (verifyUnlock(code)) {
+        u.unlocked = true; 
+        saveUser(u);
+        toast('Withdraw unlocked');
+        setTimeout(()=>location.href='withdraw.html', 600);
+      } else {
+        toast('Invalid code');
+      }
+    });
+  </script>
+</body>
+</html>
